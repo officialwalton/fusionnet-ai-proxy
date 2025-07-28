@@ -1,6 +1,9 @@
-const express = require('express');
-const cors = require('cors');
-const fetch = require('node-fetch');
+import express from 'express';
+import cors from 'cors';
+import fetch from 'node-fetch';
+import dotenv from 'dotenv';
+
+dotenv.config();
 const app = express();
 
 app.use(cors());
@@ -35,11 +38,10 @@ app.post('/ask-ai', async (req, res) => {
 
     res.json({ reply });
   } catch (err) {
-    console.error("Error contacting OpenAI:", err.message);
+    console.error("Error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Fusion AI proxy running on port ${PORT}`));
-￼Enter
