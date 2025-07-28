@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
@@ -25,11 +26,20 @@ app.post('/ask-ai', async (req, res) => {
     });
 
     const data = await resp.json();
-    res.json({ reply: data.choices[0]?.message?.content || 'No response' });
+    console.log("OpenAI API response:", JSON.stringify(data, null, 2));
+
+    const reply = data.choices?.[0]?.message?.content;
+    if (!reply) {
+      return res.status(500).json({ error: 'No valid response from AI' });
+    }
+
+    res.json({ reply });
   } catch (err) {
+    console.error("Error contacting OpenAI:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Fusion AI proxy running on port ${PORT}`));
+￼Enter
