@@ -2,7 +2,6 @@ import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
-
 dotenv.config();
 
 const app = express();
@@ -13,13 +12,12 @@ app.use(express.json());
 
 app.post("/ask", async (req, res) => {
   const { question } = req.body;
-
   if (!question) {
-    return res.status(400).json({ error: "Question is required." });
+    return res.status(400).json({ error: "No question provided" });
   }
 
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -28,29 +26,31 @@ app.post("/ask", async (req, res) => {
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
         messages: [
-          { role: "system", content: "You are a helpful AI named Walton's AI." },
+          { role: "system", content: "You are Walton's AI, a smart and helpful assistant." },
           { role: "user", content: question }
         ]
       })
     });
 
-    const data = await response.json();
+    const data = await openaiRes.json();
 
-    if (data.choices && data.choices.length > 0) {
-      res.json({ answer: data.choices[0].message.content });
+    const answer = data?.choices?.[0]?.message?.content;
+
+    if (answer) {
+      res.json({ answer });
     } else {
-      res.status(500).json({ error: "No response from AI." });
+      res.status(500).json({ error: "No response from OpenAI", details: data });
     }
 
-  } catch (error) {
-    res.status(500).json({ error: "Something went wrong.", details: error.message });
+  } catch (err) {
+    res.status(500).json({ error: "Server error", message: err.message });
   }
 });
 
 app.get("/", (req, res) => {
-  res.send("Walton's AI is online!");
+  res.send("Walton’s AI is online.");
 });
 
 app.listen(PORT, () => {
-  console.log(`Fusion AI proxy running on port ${PORT}`);
+  console.log(`Running on port ${PORT}`);
 });
