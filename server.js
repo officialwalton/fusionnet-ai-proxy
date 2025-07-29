@@ -39,4 +39,3 @@ app.post("/ask", async (req, res) => {
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`AI proxy listening on ${port}`));
-￼Enter
