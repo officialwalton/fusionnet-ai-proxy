@@ -1,47 +1,56 @@
-import express from 'express';
-import cors from 'cors';
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
+import express from "express";
+import fetch from "node-fetch";
+import cors from "cors";
+import dotenv from "dotenv";
 
 dotenv.config();
+
 const app = express();
+const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json());
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+app.post("/ask", async (req, res) => {
+  const { question } = req.body;
 
-app.post('/ask-ai', async (req, res) => {
-  const { message } = req.body;
-  if (!message) return res.status(400).json({ error: 'No message provided.' });
+  if (!question) {
+    return res.status(400).json({ error: "Question is required." });
+  }
 
   try {
-    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${OPENAI_API_KEY}`
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: message }]
+        messages: [
+          { role: "system", content: "You are a helpful AI named Walton's AI." },
+          { role: "user", content: question }
+        ]
       })
     });
 
-    const data = await resp.json();
-    console.log("OpenAI API response:", JSON.stringify(data, null, 2));
+    const data = await response.json();
 
-    const reply = data.choices?.[0]?.message?.content;
-    if (!reply) {
-      return res.status(500).json({ error: 'No valid response from AI' });
+    if (data.choices && data.choices.length > 0) {
+      res.json({ answer: data.choices[0].message.content });
+    } else {
+      res.status(500).json({ error: "No response from AI." });
     }
 
-    res.json({ reply });
-  } catch (err) {
-    console.error("Error:", err.message);
-    res.status(500).json({ error: err.message });
+  } catch (error) {
+    res.status(500).json({ error: "Something went wrong.", details: error.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Fusion AI proxy running on port ${PORT}`));
+app.get("/", (req, res) => {
+  res.send("Walton's AI is online!");
+});
+
+app.listen(PORT, () => {
+  console.log(`Fusion AI proxy running on port ${PORT}`);
+});
